@@ -1,0 +1,77 @@
+p{
+    font-family: "Open Sans", verdana, arial, sans-serif;
+    color: white;
+}
+
+h1{
+    font-family: "Open Sans", verdana, arial, sans-serif;
+    color: white;
+    /*list-style-type: none;*/
+    /*margin: 0;*/
+    /*padding: 3px;*/
+    /*overflow: hidden;*/
+    /*background-color: #333;*/
+}
+
+/*ul {*/
+
+/*    list-style-type: none;*/
+/*    margin: 0;*/
+/*    padding: 0;*/
+/*    overflow: hidden;*/
+/*    background-color: #333;*/
+/*}*/
+
+/*li {*/
+/*    float: left;*/
+/*    font-family: "Open Sans", verdana, arial, sans-serif;*/
+/*    color: white;*/
+/*    font-size: x-large;*/
+/*    font-weight: bolder;*/
+/*    display: block;*/
+/*    text-align: center;*/
+/*    padding: 14px 16px;*/
+/*    text-decoration: none;*/
+/*}*/
+
+/*li a:hover {*/
+/*    background-color: #111;*/
+/*}*/
+
+.navbar {
+    /*background-color: #f0f0f0; !* Set the background color of the navbar *!*/
+    background-color: rgba(18,0,20,0.94)
+}
+
+.nav-list {
+    list-style-type: none; /* Remove default list styles */
+    margin: 0; /* Remove margin */
+    padding: 0; /* Remove padding */
+    display: flex; /* Use flexbox to create a horizontal list */
+}
+
+.nav-item {
+    /*margin-right: 10px; !* Add margin to the right of each list item for spacing *!*/
+        float: left;
+        font-family: "Open Sans", verdana, arial, sans-serif;
+        font-size: x-large;
+        font-weight: bolder;
+        display: block;
+        width: 100%;
+        padding: 14px 16px;
+        text-decoration: none;
+}
+
+.nav-item:last-child {
+    margin-right: 0; /* Remove margin from the last list item to eliminate the gap on the right */
+}
+
+.nav-item a {
+    text-decoration: none; /* Remove underline from links */
+    color: white; /* Set the color of the links */
+    padding: 5%; /* Add padding to the links for spacing */
+}
+
+.nav-item a:hover {
+    color: #333; /* Change link color on hover */
+}

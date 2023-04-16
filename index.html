@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>KUKA Visualization</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body style="background-color: rgba(18,0,20,0.94); margin: 0px;">
+<nav class="navbar">
+    <ul class="nav-list">
+        <li class="nav-item"><a href="#home">KUKA Visualization</a></li>
+    </ul>
+</nav>
+<!--<ul>-->
+<!--    <li style="margin-left: 5%"><a class="active"></a> Kuka Visualization</li>-->
+<!--</ul>-->
+<div style="padding-left: 5%; padding-right: 5%">
+
+    <!--<div>-->
+    <!--    <h1>Kuka Visualization</h1>-->
+    <!--</div>-->
+
+    <div style="padding-left:20px; display: flex; width: 25%; min-width: 600px; background-color: #12001a; height: 80px; margin-top: 20px; margin-bottom: 20px">
+        <div style="flex:1;  align-self: center; ">
+            <p>from</p>
+        </div>
+        <div style="flex:1;  align-self: center; margin-right: 10%; margin-left: 20px">
+            <input id="startDateTimePicker"/>
+        </div>
+        <div style=" flex:1; align-self: center;">
+            <p>till</p>
+        </div>
+        <div style=" flex:1; align-self: center; margin-right: 10%; margin-left: 20px">
+            <input id="startDateTimePicker"/>
+        </div>
+    </div>
+    <div id="lineChart">
+
+    </div>
+</div>
+</body>
+</html>
+
+<Script>
+
+    flatpickr("#startDateTimePicker", {
+        enableTime: true,
+        enableSeconds: true,
+        dateFormat: "Y-m-d H:i:S",
+        time_24hr: true
+    })
+
+    let xData = [];
+    let xEnergyData = [];
+    let yData = [];
+    let yEnergyData = [];
+
+    fetch('http://localhost:8080/rest/questdb/movement/getByTimeFrame', {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            "startDate": "2023-04-14T14:45:51.528538Z",
+            "endDate": "2023-04-14T17:45:51.688595Z"
+        })
+    })
+        .then(response => response.json())
+        .then(response => {
+            //console.log(JSON.stringify(response))
+
+            for (let i = 0; i < response.length; i++) {
+                let test = response[i].ValuesActual_TCP_pose.substring(1, response[i].ValuesActual_TCP_pose.length - 1).split(',').map(parseFloat);
+                //yData[i] = response[i].ValuesActual_q.substring(1, response[i].length - 1).split(',').map(parseFloat)[0];
+                yData[i] = test[0];
+                xData[i] = response[i].ValuesTS_PLC;
+
+            }
+            console.log(xData);
+            Plotly.newPlot('lineChart', data, layout);
+        })
+
+
+    fetch('http://localhost:8080/rest/questdb/energy/getByTimeFrame', {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            "startDate": "2023-04-14T14:45:51.528538Z",
+            "endDate": "2023-04-14T17:45:51.688595Z"
+        })
+    })
+        .then(response => response.json())
+        .then(response => {
+            //console.log(JSON.stringify(response))
+
+            for (let i = 0; i < response.length; i++) {
+                let test = response[i].ValuesI_RMS.substring(1, response[i].ValuesI_RMS.length - 1).split(',').map(parseFloat);
+                //yData[i] = response[i].ValuesActual_q.substring(1, response[i].length - 1).split(',').map(parseFloat)[0];
+                yEnergyData[i] = test[0];
+                xEnergyData[i] = ((response[i].ValuesTS / 10000) - 11644473600000) * 1000;
+
+
+            }
+            console.log("energy")
+            console.log(xEnergyData);
+            Plotly.newPlot('lineChart', data, layout);
+        })
+
+    // Define your chart data
+    var data = [
+        {
+            x: xData,
+            y: yData,
+            mode: 'lines',
+            marker: {
+                color: 'white' // Set marker color to white
+            },
+            name: "movement"
+        },
+        {
+            x: xEnergyData,
+            y: yEnergyData,
+            mode: 'lines',
+            marker: {
+                color: "green"
+            },
+            name: "energy"
+        }
+    ];
+
+    //Define your chart layout
+    var layout = {
+        plot_bgcolor: '#12001a', // Set plot background color to black
+        paper_bgcolor: '#12001a', // Set paper background color to black
+        font: {
+            color: 'white' // Set font color to white
+        },
+        title: {
+            text: 'KUKA Chart' // Set chart title
+        },
+        xaxis: {
+            gridcolor: '#4c3457', // Set x-axis grid color to white
+        },
+        yaxis: {
+            gridcolor: '#4c3457' // Set y-axis grid color to white
+        }
+    };
+
+    // Create the chart
+    //Plotly.newPlot('lineChart', data);
+
+
+    // var trace1 = {
+    //     x: [1, 2, 3, 4],
+    //     y: [10, 15, 13, 17],
+    //     type: 'scatter'
+    // };
+    //
+    // var trace2 = {
+    //     x: [1, 2, 3, 4],
+    //     y: [16, 5, 11, 9],
+    //     type: 'scatter'
+    // };
+    //
+    // var data = [trace1, trace2];
+    //
+    //
+    // Plotly.newPlot('lineChart', data);
+
+    Plotly.newPlot('lineChart', data, layout);
+
+    var chart = document.getElementById('lineChart');
+
+    // Add event listener for 'plotly_afterplot' event
+
+    // chart.on('plotly_click', function() {
+    //     var xRange =  chart.layout.xaxis.range;
+    //     console.log("test")
+    //     // Calculate the difference between the maximum and minimum x-axis values
+    //     var xDiff = xRange[1] - xRange[0];
+    //
+    //     let update = {
+    //         mode: 'lines+markers',
+    //     }
+    //     Plotly.restyle(chart, update, 0)
+    //
+    //     // // Set the visibility of markers based on the x-axis range
+    //     // if (xDiff <= 2) {
+    //     //     Plotly.updateTraces('lineChart', {mode: "lines"}); // Hide markers if xDiff <= 2
+    //     // } else {
+    //     //     Plotly.updateTraces('lineChart', {mode: "lines+markers"}); // Show markers if xDiff > 2
+    //     // }
+    // })
+
+    // chart.then(function() {
+    //     setTimeout(function(){
+    //         // Get the x-axis range
+    //         var xRange =  chart.layout.xaxis.range;
+    //
+    //         // Calculate the difference between the maximum and minimum x-axis values
+    //         var xDiff = xRange[1] - xRange[0];
+    //
+    //         // Set the visibility of markers based on the x-axis range
+    //         if (xDiff <= 2) {
+    //             Plotly.updateTraces('lineChart', {mode: "lines"}); // Hide markers if xDiff <= 2
+    //         } else {
+    //             Plotly.updateTraces('lineChart', {mode: "lines+markers"}); // Show markers if xDiff > 2
+    //         }
+    //     }, 1000);
+    //
+    // });
+
+</Script>
