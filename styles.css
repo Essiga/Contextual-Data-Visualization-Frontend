@@ -69,7 +69,7 @@ h1{
 .nav-item a {
     text-decoration: none; /* Remove underline from links */
     color: white; /* Set the color of the links */
-    padding: 5%; /* Add padding to the links for spacing */
+    padding-left: 5%; /* Add padding to the links for spacing */
 }
 
 .nav-item a:hover {
