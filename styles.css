@@ -73,7 +73,8 @@ h1{
 }
 
 .nav-item a:hover {
-    color: #333; /* Change link color on hover */
+    color: rgba(159, 81, 88, 0.85); /* Change link color on hover */
+    /*color: rgba(108, 54, 102, 0.95); !* Change link color on hover *!*/
 }
 .flatpickr-day.inRange,
 .flatpickr-day.prevMonthDay.inRange,

@@ -39,7 +39,7 @@
             <input id="endDateTimePicker"/>
         </div>
     </div>
-    <div style="padding-left:20px; display: flex; width: 25%; min-width: 600px; background-color: #12001a; height: 80px; margin-top: 20px; margin-bottom: 20px">
+    <div id="measurements" style="padding-left:20px; display: flex; width: 25%; min-width: 600px; background-color: #12001a; height: 80px; margin-top: 20px; margin-bottom: 20px">
         <div style="flex:1;  align-self: center; ">
             <p>Measurement</p>
         </div>
@@ -61,21 +61,25 @@
 </html>
 
 <Script>
+
+    let kukaInstructions = [];
+
     $( document ).ready(function() {
         document.getElementById('kukaInstructions').onchange = function () {
-            alert("change");
+           let select = document.getElementById("kukaInstructions");
+           console.log(kukaInstructions[select.value]);
         };
+        $("#measurements").hide();
+
     });
 
     $( "#startDateTimePicker" ).change(function() {
         if( $("#endDateTimePicker").val() !== ""){
-            alert("not empty");
             fetchKukaInstructions()
         }
     });
     $( "#endDateTimePicker" ).change(function() {
         if( $("#startDateTimePicker").val() !== ""){
-            alert("not empty");
             fetchKukaInstructions()
         }
     });
@@ -99,12 +103,15 @@
                 while(select.firstChild){
                     select.removeChild(select.firstChild);
                 }
+                kukaInstructions = response;
                 for(let i = 0; i < response.length; i++){
                     let el = document.createElement("option");
                     el.textContent = response[i].name + " " +  response[i].value.value + " " +  response[i].serverTime.utcTime;
-                    el.value = response[i];
+                    //save the index array as value this way it's possible to just access the correct object by index.
+                    el.value = i;
                     select.appendChild(el);
                 }
+                $("#measurements").show();
 
             })
 
