@@ -6,6 +6,7 @@
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body style="background-color: rgba(18,0,20,0.94); margin: 0px;">
@@ -35,9 +36,23 @@
             <p>till</p>
         </div>
         <div style=" flex:1; align-self: center; margin-right: 10%; margin-left: 20px">
-            <input id="startDateTimePicker"/>
+            <input id="endDateTimePicker"/>
         </div>
     </div>
+    <div style="padding-left:20px; display: flex; width: 25%; min-width: 600px; background-color: #12001a; height: 80px; margin-top: 20px; margin-bottom: 20px">
+        <div style="flex:1;  align-self: center; ">
+            <p>Measurement</p>
+        </div>
+        <div style="align-self: center; margin-right: 10%; margin-left: 20px; width: 3100px">
+            <select name="cars" id="kukaInstructions">
+                <option value="volvo">Volvo</option>
+                <option value="saab">Saabsadjfl ajdskfjdsa jflkdsa jfkajds lfj</option>
+                <option value="opel">Opel</option>
+                <option value="audi">Audi</option>
+            </select>
+        </div>
+    </div>
+
     <div id="lineChart">
 
     </div>
@@ -46,8 +61,62 @@
 </html>
 
 <Script>
+    $( document ).ready(function() {
+        document.getElementById('kukaInstructions').onchange = function () {
+            alert("change");
+        };
+    });
+
+    $( "#startDateTimePicker" ).change(function() {
+        if( $("#endDateTimePicker").val() !== ""){
+            alert("not empty");
+            fetchKukaInstructions()
+        }
+    });
+    $( "#endDateTimePicker" ).change(function() {
+        if( $("#startDateTimePicker").val() !== ""){
+            alert("not empty");
+            fetchKukaInstructions()
+        }
+    });
+
+    //get data from server
+    function fetchKukaInstructions(){
+        fetch('http://localhost:8080/rest/mongodb/getByTimeFrame', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                "startDate": "1974-03-23T09:47:56.026450Z",
+                "endDate": "1974-03-23T09:47:56.42693Z"
+            })
+        }).then(response => response.json())
+            .then(response => {
+                console.log(JSON.stringify(response))
+                let select = document.getElementById("kukaInstructions");
+                while(select.firstChild){
+                    select.removeChild(select.firstChild);
+                }
+                for(let i = 0; i < response.length; i++){
+                    let el = document.createElement("option");
+                    el.textContent = response[i].name + " " +  response[i].value.value + " " +  response[i].serverTime.utcTime;
+                    el.value = response[i];
+                    select.appendChild(el);
+                }
+
+            })
+
+    }
 
     flatpickr("#startDateTimePicker", {
+        enableTime: true,
+        enableSeconds: true,
+        dateFormat: "Y-m-d H:i:S",
+        time_24hr: true
+    })
+    flatpickr("#endDateTimePicker", {
         enableTime: true,
         enableSeconds: true,
         dateFormat: "Y-m-d H:i:S",
