@@ -91,12 +91,16 @@
             .then(response => response.json())
             .then(response => {
                 //console.log(JSON.stringify(response))
+                actualTorqueValue.length = 0;
+                actualTCPPoseValue.length = 0;
+                assemblyDataTimeStamp.length = 0;
 
                 for (let i = 0; i < response.length; i++) {
-                    let test = response[i].Values_Actual_TCP_pose.substring(1, response[i].Values_Actual_TCP_pose.length - 1).split(',').map(parseFloat);
+                    let tcpPoseValues = response[i].Values_Actual_TCP_pose.substring(1, response[i].Values_Actual_TCP_pose.length - 1).split(',').map(parseFloat);
+                    let torqueValues = response[i].Values_actual_torque.substring(1, response[i].Values_actual_torque.length - 1).split(',').map(parseFloat);
                     //yData[i] = response[i].ValuesActual_q.substring(1, response[i].length - 1).split(',').map(parseFloat)[0];
-                    yData[i] = test[0] * (180/Math.PI);
-
+                    actualTCPPoseValue[i] = tcpPoseValues[0] * (180/Math.PI);
+                    actualTorqueValue[i] = torqueValues[0];
 
                     const dateTimeStamp = new Date(response[i].Values_TS_PLC / 1000); // Divide by 1000 to convert microseconds to milliseconds
 
@@ -108,10 +112,10 @@
                     //xData[i] = response[i].Values_TS_PLC;
                     //const str = new Date().toLocaleString('en-US', { timeZone: 'Europe/Vienna' });
 
-                    xData[i] = formattedDate;
+                    assemblyDataTimeStamp[i] = formattedDate;
 
                 }
-                console.log(xData);
+                console.log(assemblyDataTimeStamp);
                 Plotly.newPlot('lineChart', data, layout);
             })
 
@@ -130,11 +134,16 @@
             .then(response => response.json())
             .then(response => {
                 //console.log(JSON.stringify(response))
-
+                //clear the array
+                iRMSValue.length = 0;
+                wValue.length = 0;
+                energyDataTimeStamp.length = 0;
                 for (let i = 0; i < response.length; i++) {
-                    let test = response[i].Values_I_RMS.substring(1, response[i].Values_I_RMS.length - 1).split(',').map(parseFloat);
+                    let iRMSValues = response[i].Values_I_RMS.substring(1, response[i].Values_I_RMS.length - 1).split(',').map(parseFloat);
+                    let wValues = response[i].Values_W.substring(1, response[i].Values_W.length - 1).split(',').map(parseFloat);
                     //yData[i] = response[i].Values_Actual_q.substring(1, response[i].length - 1).split(',').map(parseFloat)[0];
-                    yEnergyData[i] = test[0];
+                    iRMSValue[i] = iRMSValues[0];
+                    wValue[i] = wValues[0];
 
                     let ts = ((response[i].Values_TS / 10000) - 11644473600000);
 
@@ -146,13 +155,13 @@
                     //const formattedDate = dateTimeStamp.toISOString().replace('Z', `${(ts % 1000).toString().padStart(3, '0')}Z`);
 
                     //xEnergyData[i] = ((response[i].Values_TS / 10000) - 11644473600000) * 1000;
-                    xEnergyData[i] = formattedDate;
+                    energyDataTimeStamp[i] = formattedDate;
 
 
                 }
                 console.log("energy")
-                console.log(xEnergyData);
-                //Plotly.newPlot('lineChart', data, layout);
+                console.log(energyDataTimeStamp);
+                Plotly.newPlot('lineChart', data, layout);
             })
 
         Plotly.newPlot('lineChart', data, layout);
@@ -221,32 +230,52 @@
         time_24hr: true
     })
 
-    let xData = [];
-    let xEnergyData = [];
-    let yData = [];
-    let yEnergyData = [];
+    let assemblyDataTimeStamp = [];
+    let energyDataTimeStamp = [];
+    let actualTorqueValue = [];
+    let actualTCPPoseValue = [];
+    let iRMSValue = [];
+    let wValue = [];
 
 
 
     // Define your chart data
     var data = [
         {
-            x: xData,
-            y: yData,
+            x: assemblyDataTimeStamp,
+            y: actualTCPPoseValue,
             mode: 'lines',
             marker: {
                 color: 'white' // Set marker color to white
             },
-            name: "movement"
+            name: "TCP Pose"
         },
         {
-            x: xEnergyData,
-            y: yEnergyData,
+            x: assemblyDataTimeStamp,
+            y: actualTorqueValue,
+            mode: 'lines',
+            marker: {
+                color: 'blue' // Set marker color to white
+            },
+            name: "Actual Torque"
+        },
+        {
+            x: energyDataTimeStamp,
+            y: iRMSValue,
             mode: 'lines',
             marker: {
                 color: "green"
             },
-            name: "energy"
+            name: "I RMS"
+        },
+        {
+            x: energyDataTimeStamp,
+            y: wValue,
+            mode: 'lines',
+            marker: {
+                color: "orange"
+            },
+            name: "W"
         }
     ];
 
