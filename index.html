@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+
     <link rel="stylesheet" href="styles.css">
 </head>
 <body style="background-color: rgba(18,0,20,0.94); margin: 0px;">
@@ -39,7 +40,8 @@
             <input id="endDateTimePicker"/>
         </div>
     </div>
-    <div id="measurements" style="padding-left:20px; display: flex; width: 25%; min-width: 600px; background-color: #12001a; height: 80px; margin-top: 20px; margin-bottom: 20px">
+    <div id="measurements"
+         style="padding-left:20px; display: flex; width: 25%; min-width: 600px; background-color: #12001a; height: 80px; margin-top: 20px; margin-bottom: 20px">
         <div style="flex:1;  align-self: center; ">
             <p>Measurement</p>
         </div>
@@ -53,10 +55,12 @@
         </div>
     </div>
 
-    <div id="lineChart">
+    <div id="assemblyDataChart">
+    </div>
+    <br/>
+    <div id="energyDataChart"></div>
 
     </div>
-</div>
 </body>
 </html>
 
@@ -64,19 +68,19 @@
 
     let kukaInstructions = [];
 
-    $( document ).ready(function() {
+    $(document).ready(function () {
         document.getElementById('kukaInstructions').onchange = function () {
-           let select = document.getElementById("kukaInstructions");
-           console.log(kukaInstructions[select.value]);
-           if(select.value != -1){
-               fetchChartData();
-           }
+            let select = document.getElementById("kukaInstructions");
+            console.log(kukaInstructions[select.value]);
+            if (select.value != -1) {
+                fetchChartData();
+            }
         };
         $("#measurements").hide();
 
     });
 
-    function fetchChartData(){
+    function fetchChartData() {
         fetch('http://localhost:8080/rest/questdb/movement/getByTimeFrame', {
             method: 'POST',
             headers: {
@@ -96,11 +100,21 @@
                 assemblyDataTimeStamp.length = 0;
 
                 for (let i = 0; i < response.length; i++) {
-                    let tcpPoseValues = response[i].Values_Actual_TCP_pose.substring(1, response[i].Values_Actual_TCP_pose.length - 1).split(',').map(parseFloat);
+                    let actualQValues = response[i].Values_actual_q.substring(1, response[i].Values_actual_q.length - 1).split(',').map(parseFloat);
                     let torqueValues = response[i].Values_actual_torque.substring(1, response[i].Values_actual_torque.length - 1).split(',').map(parseFloat);
                     //yData[i] = response[i].ValuesActual_q.substring(1, response[i].length - 1).split(',').map(parseFloat)[0];
-                    actualTCPPoseValue[i] = tcpPoseValues[0] * (180/Math.PI);
-                    actualTorqueValue[i] = torqueValues[0];
+
+                    actualQ01[i] = actualQValues[0] * (180 / Math.PI);
+                    actualQ02[i] = actualQValues[1] * (180 / Math.PI);
+                    actualQ03[i] = actualQValues[2] * (180 / Math.PI);
+                    actualQ04[i] = actualQValues[3] * (180 / Math.PI);
+                    actualQ05[i] = actualQValues[4] * (180 / Math.PI);
+                    actualQ06[i] = actualQValues[5] * (180 / Math.PI);
+                    actualQ07[i] = actualQValues[6] * (180 / Math.PI);
+
+                    // actualTCPPoseValue[i] = tcpPoseValues[0] * (180/Math.PI);
+                    //actualTorqueValue[i] = torqueValues[0];
+
 
                     const dateTimeStamp = new Date(response[i].Values_TS_PLC / 1000); // Divide by 1000 to convert microseconds to milliseconds
 
@@ -116,7 +130,7 @@
 
                 }
                 console.log(assemblyDataTimeStamp);
-                Plotly.newPlot('lineChart', data, layout);
+                Plotly.newPlot('assemblyDataChart', assemblyChartData, assemblyDataChartLayout);
             })
 
 
@@ -161,25 +175,26 @@
                 }
                 console.log("energy")
                 console.log(energyDataTimeStamp);
-                Plotly.newPlot('lineChart', data, layout);
+                Plotly.newPlot('energyDataChart', energyChartData, energyDataChartLayout);
             })
 
-        Plotly.newPlot('lineChart', data, layout);
+        // Plotly.newPlot('assemblyDataChart', assemblyChartData, assemblyDataChartLayout);
+        // Plotly.newPlot('energyDataChart', energyChartData, energyDataChartLayout);
     }
 
-    $( "#startDateTimePicker" ).change(function() {
-         if( $("#endDateTimePicker").val() !== ""){
+    $("#startDateTimePicker").change(function () {
+        if ($("#endDateTimePicker").val() !== "") {
             fetchKukaInstructions()
         }
     });
-    $( "#endDateTimePicker" ).change(function() {
-        if( $("#startDateTimePicker").val() !== ""){
+    $("#endDateTimePicker").change(function () {
+        if ($("#startDateTimePicker").val() !== "") {
             fetchKukaInstructions()
         }
     });
 
     //get data from server
-    function fetchKukaInstructions(){
+    function fetchKukaInstructions() {
         fetch('http://localhost:8080/rest/mongodb/getByTimeFrame', {
             method: 'POST',
             headers: {
@@ -194,7 +209,7 @@
             .then(response => {
                 console.log(JSON.stringify(response))
                 let select = document.getElementById("kukaInstructions");
-                while(select.firstChild){
+                while (select.firstChild) {
                     select.removeChild(select.firstChild);
                 }
                 let element = document.createElement("option");
@@ -202,11 +217,11 @@
                 element.value = -1;
                 select.append(element);
                 kukaInstructions = response;
-                for(let i = 0; i < response.length; i++){
+                for (let i = 0; i < response.length; i++) {
                     var date = new Date(0);
                     date.setUTCSeconds(response[i].startTimeStamp)
                     let el = document.createElement("option");
-                    el.textContent = response[i].name + " BearingPos: " +  response[i].trayPosBearing + " CapPos: "+ response[i].trayPosCap + " StartTime: " +  date.toLocaleString();
+                    el.textContent = response[i].name + " BearingPos: " + response[i].trayPosBearing + " CapPos: " + response[i].trayPosCap + " StartTime: " + date.toLocaleString();
                     //save the index array as value this way it's possible to just access the correct object by index.
                     el.value = i;
                     select.appendChild(el);
@@ -234,31 +249,74 @@
     let energyDataTimeStamp = [];
     let actualTorqueValue = [];
     let actualTCPPoseValue = [];
+    let actualQ01 = [];
+    let actualQ02 = [];
+    let actualQ03 = [];
+    let actualQ04 = [];
+    let actualQ05 = [];
+    let actualQ06 = [];
+    let actualQ07 = [];
     let iRMSValue = [];
     let wValue = [];
 
 
-
     // Define your chart data
-    var data = [
+    var assemblyChartData = [
         {
             x: assemblyDataTimeStamp,
-            y: actualTCPPoseValue,
+            y: actualQ01,
+            mode: 'lines',
+            name: "Actual Q1 [deg]",
+
+        },
+        {
+            x: assemblyDataTimeStamp,
+            y: actualQ02,
+            mode: 'lines',
+            name: "Actual Q2 [deg]",
+
+        },
+        {
+            x: assemblyDataTimeStamp,
+            y: actualQ03,
             mode: 'lines',
             marker: {
                 color: 'white' // Set marker color to white
             },
-            name: "TCP Pose"
+            name: "Actual Q3 [deg]",
+
         },
         {
             x: assemblyDataTimeStamp,
-            y: actualTorqueValue,
+            y: actualQ04,
             mode: 'lines',
-            marker: {
-                color: 'blue' // Set marker color to white
-            },
-            name: "Actual Torque"
+            name: "Actual Q4 [deg]",
+
         },
+        {
+            x: assemblyDataTimeStamp,
+            y: actualQ05,
+            mode: 'lines',
+            name: "Actual Q5 [deg]",
+
+        },
+        {
+            x: assemblyDataTimeStamp,
+            y: actualQ06,
+            mode: 'lines',
+            name: "Actual Q6 [deg]",
+
+        },
+        {
+            x: assemblyDataTimeStamp,
+            y: actualQ07,
+            mode: 'lines',
+            name: "Actual Q7 [deg]",
+
+        },
+    ];
+    var energyChartData = [
+
         {
             x: energyDataTimeStamp,
             y: iRMSValue,
@@ -266,7 +324,8 @@
             marker: {
                 color: "green"
             },
-            name: "I RMS"
+            name: "I RMS [A]",
+            //yaxis: 'y2' // associate with the secondary y-axis
         },
         {
             x: energyDataTimeStamp,
@@ -275,90 +334,71 @@
             marker: {
                 color: "orange"
             },
-            name: "W"
+            name: "Power [kWh]",
+            yaxis: 'y2' // associate with the secondary y-axis
         }
     ];
 
-    //Define your chart layout
-    var layout = {
+    //Define your chart assemblyDataChartLayout
+    var assemblyDataChartLayout = {
         plot_bgcolor: '#12001a', // Set plot background color to black
         paper_bgcolor: '#12001a', // Set paper background color to black
         font: {
             color: 'white' // Set font color to white
         },
         title: {
-            text: 'KUKA Chart' // Set chart title
+            text: 'Assembly Data' // Set chart title
         },
         xaxis: {
             gridcolor: '#4c3457', // Set x-axis grid color to white
         },
         yaxis: {
             gridcolor: '#4c3457' // Set y-axis grid color to white
+        },
+        yaxis2: {
+            title: 'Trace 2',
+            titlefont: {color: 'red'},
+            overlaying: 'y',
+            side: 'right'
+        }, yaxis3: {
+            title: 'Trace 3',
+            titlefont: {color: 'blue'},
+            overlaying: 'y',
+            side: 'right'
         }
     };
 
-    // Create the chart
-    //Plotly.newPlot('lineChart', data);
+    var energyDataChartLayout = {
+        plot_bgcolor: '#12001a', // Set plot background color to black
+        paper_bgcolor: '#12001a', // Set paper background color to black
+        font: {
+            color: 'white' // Set font color to white
+        },
+        title: {
+            text: 'Energy Data' // Set chart title
+        },
+        xaxis: {
+            gridcolor: '#4c3457', // Set x-axis grid color to white
+        },
+        yaxis: {
+            gridcolor: '#4c3457' // Set y-axis grid color to white
+        },
+        yaxis2: {
+            title: 'Power [kWh]',
+            titlefont: {color: 'orange'},
+            overlaying: 'y',
+            side: 'right'
+        }, yaxis3: {
+            title: 'Trace 3',
+            titlefont: {color: 'blue'},
+            overlaying: 'y',
+            side: 'right'
+        }
+    };
 
 
-    // var trace1 = {
-    //     x: [1, 2, 3, 4],
-    //     y: [10, 15, 13, 17],
-    //     type: 'scatter'
-    // };
-    //
-    // var trace2 = {
-    //     x: [1, 2, 3, 4],
-    //     y: [16, 5, 11, 9],
-    //     type: 'scatter'
-    // };
-    //
-    // var data = [trace1, trace2];
-    //
-    //
-    // Plotly.newPlot('lineChart', data);
+    Plotly.newPlot('assemblyDataChart', assemblyChartData, assemblyDataChartLayout);
+    Plotly.newPlot('energyDataChart', assemblyChartData, energyDataChartLayout);
 
-    Plotly.newPlot('lineChart', data, layout);
-
-    var chart = document.getElementById('lineChart');
-
-    // Add event listener for 'plotly_afterplot' event
-
-    // chart.on('plotly_click', function() {
-    //     var xRange =  chart.layout.xaxis.range;
-    //     console.log("test")
-    //     // Calculate the difference between the maximum and minimum x-axis values
-    //     var xDiff = xRange[1] - xRange[0];
-    //
-    //     let update = {
-    //         mode: 'lines+markers',
-    //     }
-    //     Plotly.restyle(chart, update, 0)
-    //
-    //     // // Set the visibility of markers based on the x-axis range
-    //     // if (xDiff <= 2) {
-    //     //     Plotly.updateTraces('lineChart', {mode: "lines"}); // Hide markers if xDiff <= 2
-    //     // } else {
-    //     //     Plotly.updateTraces('lineChart', {mode: "lines+markers"}); // Show markers if xDiff > 2
-    //     // }
-    // })
-
-    // chart.then(function() {
-    //     setTimeout(function(){
-    //         // Get the x-axis range
-    //         var xRange =  chart.layout.xaxis.range;
-    //
-    //         // Calculate the difference between the maximum and minimum x-axis values
-    //         var xDiff = xRange[1] - xRange[0];
-    //
-    //         // Set the visibility of markers based on the x-axis range
-    //         if (xDiff <= 2) {
-    //             Plotly.updateTraces('lineChart', {mode: "lines"}); // Hide markers if xDiff <= 2
-    //         } else {
-    //             Plotly.updateTraces('lineChart', {mode: "lines+markers"}); // Show markers if xDiff > 2
-    //         }
-    //     }, 1000);
-    //
-    // });
 
 </Script>
